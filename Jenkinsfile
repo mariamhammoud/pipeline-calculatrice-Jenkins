@@ -37,9 +37,12 @@ pipeline {
             steps {
                 dir(env.BUILD_ID) {
 
-                    sh "ls -R ."
+                    sh "ls -l sources"
 
                     unstash 'compiled-results'
+
+                    // Fix permissions so the container can read/execute the script
+                    sh "chmod +x sources/prog.py"
 
                     sh '''
                         VOLUME="$(pwd)/sources:/src"
@@ -61,6 +64,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
