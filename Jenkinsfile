@@ -29,29 +29,28 @@ pipeline {
             }
         }
 
-    stage('Deliver') {
-        agent any
-        environment {
-            VOLUME = '$(pwd)/sources:/src'
-            IMAGE = 'cdrx/pyinstaller-linux'
-        }
-        steps {
-            dir(path: env.BUILD_ID) {
-                unstash(name: 'compiled-results')
-
-                // Run PyInstaller as root (default)
-                sh "docker run --rm -v ${VOLUME} ${IMAGE} pyinstaller -F prog.py"
-
-                // Fix permissions so Jenkins can delete files
-                sh "chown -R \$(id -u):\$(id -g) sources"
+        stage('Deliver') {
+            agent any
+            environment {
+                IMAGE = 'cdrx/pyinstaller-linux'
             }
-        }
-        post {
-            success {
-                archiveArtifacts "${env.BUILD_ID}/sources/dist/prog"
-                sh "rm -rf ${env.BUILD_ID}/sources/build ${env.BUILD_ID}/sources/dist"
+            steps {
+                dir(path: env.BUILD_ID) {
+                    unstash(name: 'compiled-results')
+
+                    // Correct mount: include BUILD_ID
+                    sh "docker run --rm -v \$(pwd)/sources:/src ${IMAGE} pyinstaller -F prog.py"
+
+                    // Fix permissions so Jenkins can delete files
+                    sh "chown -R \$(id -u):\$(id -g) sources"
+                }
             }
-        }
+            post {
+                success {
+                    archiveArtifacts "${env.BUILD_ID}/sources/dist/prog"
+                    sh "rm -rf ${env.BUILD_ID}/sources/build ${env.BUILD_ID}/sources/dist"
+                }
+            }
         }
     }
 }
