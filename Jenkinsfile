@@ -35,13 +35,20 @@ pipeline {
                 IMAGE = 'cdrx/pyinstaller-linux'
             }
             steps {
+
+                // Create the directory explicitly
+                sh "mkdir -p ${env.BUILD_ID}/sources"
+
                 dir(env.BUILD_ID) {
 
-                    sh "ls -l sources"
-
+                    // Unstash into the correct directory
                     unstash 'compiled-results'
 
-                    // Fix permissions so the container can read/execute the script
+                    // Debug: confirm we are in the right place
+                    sh "echo PWD: \$(pwd)"
+                    sh "ls -R ."
+
+                    // Fix permissions
                     sh "chmod +x sources/prog.py"
 
                     sh '''
@@ -64,6 +71,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
