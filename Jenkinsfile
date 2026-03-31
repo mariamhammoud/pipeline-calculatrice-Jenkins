@@ -36,11 +36,17 @@ pipeline {
             }
             steps {
                 dir(env.BUILD_ID) {
-                    unstash 'compiled-results'
+
+                    // Confirm we are in the right directory
+                    sh "pwd"
                     sh "ls -R ."
 
+                    unstash 'compiled-results'
+
+                    // Now pwd == workspace/project2/<BUILD_ID>
                     sh '''
                         VOLUME="$(pwd)/sources:/src"
+                        echo "Using VOLUME=$VOLUME"
                         docker run --rm -v "$VOLUME" cdrx/pyinstaller-linux pyinstaller -F prog.py
                     '''
 
@@ -54,6 +60,7 @@ pipeline {
                 }
             }
         }
+
 
     }
 }
