@@ -35,16 +35,14 @@ pipeline {
                 IMAGE = 'cdrx/pyinstaller-linux'
             }
             steps {
-                dir(path: env.BUILD_ID) {
-                    unstash(name: 'compiled-results')
+                dir(env.BUILD_ID) {
+                    unstash 'compiled-results'
 
-                    // Define VOLUME here, where pwd == <workspace>/<BUILD_ID>
-                    sh """
-                        VOLUME="\$(pwd)/sources:/src"
-                        docker run --rm -v \$VOLUME ${IMAGE} pyinstaller -F prog.py
-                    """
+                    sh '''
+                        VOLUME="$(pwd)/sources:/src"
+                        docker run --rm -v "$VOLUME" cdrx/pyinstaller-linux pyinstaller -F prog.py
+                    '''
 
-                    // Fix permissions so Jenkins can delete files
                     sh "chown -R \$(id -u):\$(id -g) sources"
                 }
             }
@@ -55,5 +53,6 @@ pipeline {
                 }
             }
         }
+
     }
 }
