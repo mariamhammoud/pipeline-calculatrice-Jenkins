@@ -48,7 +48,7 @@ pipeline {
                         docker run --rm \
                             -v "$VOLUME" \
                             -e PYINSTALLER_OPTS="-F" \
-                            cdrx/pyinstaller-linux "prog.py"
+                            cdrx/pyinstaller-linux "/src/prog.py"
                     '''
 
                     sh "chown -R \$(id -u):\$(id -g) sources"
@@ -61,6 +61,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
