@@ -37,6 +37,7 @@ pipeline {
             steps {
                 dir(env.BUILD_ID) {
                     unstash 'compiled-results'
+                    sh "ls -R ."
 
                     sh '''
                         VOLUME="$(pwd)/sources:/src"
