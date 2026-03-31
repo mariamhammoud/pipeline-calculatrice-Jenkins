@@ -39,10 +39,10 @@ pipeline {
 
                     unstash 'compiled-results'
 
-                    // Convert CRLF → LF
-                    sh "sed -i 's/\\r\$//' sources/*.py"
-
-                    // Make script executable
+                    // Normalize the Python file
+                    sh "sed -i 's/\\r\$//' sources/prog.py"              // remove CRLF
+                    sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/prog.py"  // remove BOM
+                    sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py" // add shebang
                     sh "chmod +x sources/prog.py"
 
                     sh '''
@@ -65,5 +65,6 @@ pipeline {
                 }
             }
         }
+
     }
 }
