@@ -38,8 +38,11 @@ pipeline {
                 dir(path: env.BUILD_ID) {
                     unstash(name: 'compiled-results')
 
-                    // Correct mount: include BUILD_ID
-                    sh "docker run --rm -v \$(pwd)/sources:/src ${IMAGE} pyinstaller -F prog.py"
+                    // Define VOLUME here, where pwd == <workspace>/<BUILD_ID>
+                    sh """
+                        VOLUME="\$(pwd)/sources:/src"
+                        docker run --rm -v \$VOLUME ${IMAGE} pyinstaller -F prog.py
+                    """
 
                     // Fix permissions so Jenkins can delete files
                     sh "chown -R \$(id -u):\$(id -g) sources"
