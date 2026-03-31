@@ -30,38 +30,28 @@ pipeline {
         }
 
         stage('Deliver') {
-            agent any
-            environment {
-                IMAGE = 'cdrx/pyinstaller-linux'
+            agent {
+                docker {
+                    image 'cdrx/pyinstaller-linux'
+                    args '-v $PWD/sources:/src'
+                }
             }
             steps {
-                dir(env.BUILD_ID) {
+                // Normalize Python files (CRLF → LF, remove BOM)
+                sh "sed -i 's/\\r\$//' /src/*.py"
+                sh "sed -i '1s/^\\xEF\\xBB\\xBF//' /src/*.py"
 
-                    unstash 'compiled-results'
+                // Add shebang to ensure container executes Python
+                sh "sed -i '1i #!/usr/bin/env python3' /src/prog.py"
+                sh "chmod +x /src/prog.py"
 
-                    // Normalize the Python file
-                    sh "sed -i 's/\\r\$//' sources/prog.py"              // remove CRLF
-                    sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/prog.py"  // remove BOM
-                    sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py" // add shebang
-                    sh "chmod +x sources/prog.py"
-
-                    sh '''
-                        VOLUME="$(pwd)/sources:/src"
-                        echo "Using VOLUME=$VOLUME"
-
-                        docker run --rm \
-                            -v "$VOLUME" \
-                            -e PYINSTALLER_OPTS="-F" \
-                            cdrx/pyinstaller-linux "/src/prog.py"
-                    '''
-
-                    sh "chown -R \$(id -u):\$(id -g) sources"
-                }
+                // Build binary
+                sh 'pyinstaller -F /src/prog.py'
             }
             post {
                 success {
-                    archiveArtifacts "${env.BUILD_ID}/sources/dist/prog"
-                    sh "rm -rf ${env.BUILD_ID}/sources/build ${env.BUILD_ID}/sources/dist"
+                    archiveArtifacts 'sources/dist/prog'
+                    sh 'rm -rf sources/build sources/dist || true'
                 }
             }
         }
