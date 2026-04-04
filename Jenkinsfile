@@ -33,27 +33,29 @@ pipeline {
             agent {
                 docker {
                     image 'cdrx/pyinstaller-linux'
-                    args '-v $PWD/sources:/src'
+                    args "-v ${WORKSPACE}/sources:/src"
                 }
             }
+
             steps {
-                // Normalize Python files (CRLF → LF, remove BOM)
+                unstash 'compiled-results'
+
                 sh "sed -i 's/\\r\$//' /src/*.py"
                 sh "sed -i '1s/^\\xEF\\xBB\\xBF//' /src/*.py"
 
-                // Add shebang to ensure container executes Python
                 sh "sed -i '1i #!/usr/bin/env python3' /src/prog.py"
                 sh "chmod +x /src/prog.py"
 
-                // Build binary
                 sh 'pyinstaller -F /src/prog.py'
             }
+
             post {
                 success {
                     archiveArtifacts 'sources/dist/prog'
                     sh 'rm -rf sources/build sources/dist || true'
                 }
             }
+
         }
 
     }
