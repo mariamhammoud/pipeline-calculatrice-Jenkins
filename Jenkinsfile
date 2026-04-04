@@ -30,37 +30,24 @@ pipeline {
         }
 
         stage('Deliver') {
-            agent {
-                docker {
-                    image 'python:3.10-slim'
-                }
+            agent any
+            environment {
+                VOLUME = '$(pwd)/sources:/src'
+                IMAGE = 'cdrx/pyinstaller-linux'
             }
             steps {
-                unstash 'compiled-results'
-
-                // Install required system packages
-                sh 'apt-get update && apt-get install -y binutils'
-
-                // Install PyInstaller
-                sh 'pip install --no-cache-dir pyinstaller'
-
-                // Normalize Python files
-                sh "sed -i 's/\\r\$//' sources/*.py"
-                sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/*.py"
-
-                // Ensure executable
-                sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
-                sh "chmod +x sources/prog.py"
-
-                // Build binary
-                sh 'pyinstaller -F sources/prog.py'
-
-                // Archive result
-                archiveArtifacts 'dist/prog'
+                dir(path: env.BUILD_ID) {
+                    unstash(name: 'compiled-results')
+                    sh "docker run --rm -v ${VOLUME} ${IMAGE} 'pyinstaller -F prog.py'"
+                }
+            }
+            post {
+                success {
+                    archiveArtifacts "${env.BUILD_ID}/sources/dist/prog"
+                    sh "rm -rf ${env.BUILD_ID}/sources/build ${env.BUILD_ID}/sources/dist"
+                }
             }
         }
-
-
 
     }
 }
