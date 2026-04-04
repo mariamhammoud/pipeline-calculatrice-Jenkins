@@ -30,32 +30,29 @@ pipeline {
         }
 
         stage('Deliver') {
-            agent {
-                docker {
-                    image 'cdrx/pyinstaller-linux'
-                    args "-v ${WORKSPACE}/sources:/src"
-                }
-            }
-
+            agent any
             steps {
                 unstash 'compiled-results'
 
-                sh "sed -i 's/\\r\$//' /src/*.py"
-                sh "sed -i '1s/^\\xEF\\xBB\\xBF//' /src/*.py"
+                script {
+                    docker.image('cdrx/pyinstaller-linux').inside("-v ${env.WORKSPACE}/sources:/src") {
 
-                sh "sed -i '1i #!/usr/bin/env python3' /src/prog.py"
-                sh "chmod +x /src/prog.py"
+                        sh "sed -i 's/\\r\$//' /src/*.py"
+                        sh "sed -i '1s/^\\xEF\\xBB\\xBF//' /src/*.py"
 
-                sh 'pyinstaller -F /src/prog.py'
+                        sh "sed -i '1i #!/usr/bin/env python3' /src/prog.py"
+                        sh "chmod +x /src/prog.py"
+
+                        sh 'pyinstaller -F /src/prog.py'
+                    }
+                }
             }
-
             post {
                 success {
                     archiveArtifacts 'sources/dist/prog'
                     sh 'rm -rf sources/build sources/dist || true'
                 }
             }
-
         }
 
     }
