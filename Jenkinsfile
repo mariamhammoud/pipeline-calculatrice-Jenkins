@@ -45,7 +45,7 @@ pipeline {
                         sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
                         sh "chmod +x sources/prog.py"
 
-                        sh 'pyinstaller -F sources/prog.py'
+                        sh '/usr/local/bin/pyinstaller -F sources/prog.py'
                     }
                 }
             }
