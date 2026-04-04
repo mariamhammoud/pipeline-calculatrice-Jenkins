@@ -38,19 +38,28 @@ pipeline {
             steps {
                 unstash 'compiled-results'
 
+                // Install required system packages
+                sh 'apt-get update && apt-get install -y binutils'
+
+                // Install PyInstaller
                 sh 'pip install --no-cache-dir pyinstaller'
 
+                // Normalize Python files
                 sh "sed -i 's/\\r\$//' sources/*.py"
                 sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/*.py"
 
+                // Ensure executable
                 sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
                 sh "chmod +x sources/prog.py"
 
+                // Build binary
                 sh 'pyinstaller -F sources/prog.py'
 
+                // Archive result
                 archiveArtifacts 'sources/dist/prog'
             }
         }
+
 
 
     }
