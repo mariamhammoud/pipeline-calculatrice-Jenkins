@@ -56,7 +56,7 @@ pipeline {
                 sh 'pyinstaller -F sources/prog.py'
 
                 // Archive result
-                archiveArtifacts 'sources/dist/prog'
+                archiveArtifacts 'dist/prog'
             }
         }
 
