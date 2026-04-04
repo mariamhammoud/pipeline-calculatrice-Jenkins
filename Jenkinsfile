@@ -35,15 +35,17 @@ pipeline {
                 unstash 'compiled-results'
 
                 script {
-                    docker.image('cdrx/pyinstaller-linux').inside("-v ${env.WORKSPACE}/sources:/src") {
+                    docker.image('cdrx/pyinstaller-linux').inside {
 
-                        sh "sed -i 's/\\r\$//' /src/*.py"
-                        sh "sed -i '1s/^\\xEF\\xBB\\xBF//' /src/*.py"
+                        sh "ls -R ."
 
-                        sh "sed -i '1i #!/usr/bin/env python3' /src/prog.py"
-                        sh "chmod +x /src/prog.py"
+                        sh "sed -i 's/\\r\$//' sources/*.py"
+                        sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/*.py"
 
-                        sh 'pyinstaller -F /src/prog.py'
+                        sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
+                        sh "chmod +x sources/prog.py"
+
+                        sh 'pyinstaller -F sources/prog.py'
                     }
                 }
             }
