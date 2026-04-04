@@ -30,32 +30,28 @@ pipeline {
         }
 
         stage('Deliver') {
-            agent any
+            agent {
+                docker {
+                    image 'python:3.10-slim'
+                }
+            }
             steps {
                 unstash 'compiled-results'
 
-                script {
-                    docker.image('cdrx/pyinstaller-linux').inside {
+                sh 'pip install --no-cache-dir pyinstaller'
 
-                        sh "ls -R ."
+                sh "sed -i 's/\\r\$//' sources/*.py"
+                sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/*.py"
 
-                        sh "sed -i 's/\\r\$//' sources/*.py"
-                        sh "sed -i '1s/^\\xEF\\xBB\\xBF//' sources/*.py"
+                sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
+                sh "chmod +x sources/prog.py"
 
-                        sh "sed -i '1i #!/usr/bin/env python3' sources/prog.py"
-                        sh "chmod +x sources/prog.py"
+                sh 'pyinstaller -F sources/prog.py'
 
-                        sh '/usr/local/bin/pyinstaller -F sources/prog.py'
-                    }
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts 'sources/dist/prog'
-                    sh 'rm -rf sources/build sources/dist || true'
-                }
+                archiveArtifacts 'sources/dist/prog'
             }
         }
+
 
     }
 }
